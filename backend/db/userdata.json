@@ -1,0 +1,27 @@
+[
+    {
+        "card_number": "XXXXYYYY",
+        "info": {
+            "user_name": "",
+            "user_PIN": "8897",
+            "avl_bal": 338000
+        }
+    },
+    {
+        "card_number": "AAAAXXXX",
+        "info": {
+            "user_name": "nishant",
+            "user_PIN": "7878",
+            "avl_bal": 81001
+        }
+    },
+    {
+        "card_number": "88998899",
+        "info": {
+            "user_PIN": "1234",
+            "avl_bal": 28644,
+            "contact ": 0,
+            "contact": 787878655
+        }
+    }
+]
