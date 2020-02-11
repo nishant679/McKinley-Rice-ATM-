@@ -212,57 +212,89 @@ app.post('/deposit', (req, res) => {
 
 //Withdraw amount API
 app.post('/withdraw', (req, res) => {
-    //performing withdraw operation
-    const readfile = fs.readFileSync(datapath);
-    var user_data = JSON.parse(readfile);
-    //fetching atm info
-    const readfile2 = fs.readFileSync(atm_info);
-    var atm_bal = JSON.parse(readfile2);
-    var card_num = req.query.card_number;
-    var PIN = req.query.PIN;
-    console.log(req.query.pin)
-    // Pin and cardnumber validation code will go here 
 
-
-    //On successful validation perform withdraw operation 
-    var amount = Number(req.query.amount);
-    var flag = 0;
-    var error_code = 0;
-    var avl_bal = 0;
-    for (var i = 0; i < user_data.length; i++) {
-        if (user_data[i].card_number === card_num) {
-            console.log("card number matched")
-            //checking if the PIN matched
-            if (user_data[i].info.user_PIN === PIN) {
-                //checking if amount exceeds available balance
-                if (amount > user_data[i].info.avl_bal) {
-                    error_code = 200
-                }
-                else {
-                    user_data[i].info.avl_bal = user_data[i].info.avl_bal - amount;
-                    flag = 1;
-                    avl_bal = user_data[i].info.avl_bal;
-                    atm_bal.note_type.n100 = atm_bal.note_type.n100 - amount;
-                }
-            }
-            else {
-                error_code = 300;
-            }
-        }
-    }
-    var updateddata = JSON.stringify(user_data);
-    fs.writeFileSync(datapath, updateddata);
-    //update atm balance
-    var updateddata = JSON.stringify(atm_bal);
-    fs.writeFileSync(atm_info, updateddata);
-    if (flag === 1) {
-        res.send({
-            "status": "success",
-            "avl_bal": avl_bal,
-        })
+    if (!req.query) {
+        res.send({ "status": " fail", "error ": "insufficient params" })
     }
     else {
-        res.send({ "status": "fail", "error_code": error_code })
+        //performing withdraw operation
+        const readfile = fs.readFileSync(datapath);
+        var user_data = JSON.parse(readfile);
+        //fetching atm info
+        const readfile2 = fs.readFileSync(atm_info);
+        var atm_bal = JSON.parse(readfile2);
+        var card_num = req.query.card_number;
+        var PIN = req.query.PIN;
+        console.log(req.query.pin)
+        // Pin and cardnumber validation code will go here 
+
+
+        //On successful validation perform withdraw operation 
+        var amount = Number(req.query.amount);
+        var flag = 0;
+        var error_code = 0;
+        var avl_bal = 0;
+        var n2000 = 0, n500 = 0, n100 = 0;
+        for (var i = 0; i < user_data.length; i++) {
+            if (user_data[i].card_number === card_num) {
+                console.log("card number matched")
+                //checking if the PIN matched
+                if (user_data[i].info.user_PIN === PIN) {
+                    //checking if amount exceeds available balance
+                    if (amount > user_data[i].info.avl_bal) {
+                        error_code = 200
+                    }
+                    else {
+                        user_data[i].info.avl_bal = user_data[i].info.avl_bal - amount;
+                        flag = 1;
+                        avl_bal = user_data[i].info.avl_bal;
+                        atm_bal.note_type.n100 = atm_bal.note_type.n100 - amount;
+
+                        //note count
+                        while (amount > 0) {
+                            if (amount > 2000) {
+                                n2000 = amount % 2000;
+                                amount = amount - (2000 * n2000);
+                                atm_bal.note_type.n2000 = atm_bal.note_type.n2000 - n2000;
+
+                            }
+                            else if (amount > 500) {
+                                n500 = amount % 500;
+                                amount = amount - (500 * n500);
+                                atm_bal.note_type.n500 = atm_bal.note_type.n500 - n500;
+                            }
+                            else if (amount >= 100) {
+                                n100 = amount % 100;
+                                amount = amount - (100 * n500);
+                                atm_bal.note_type.n100 = atm_bal.note_type.n100 - n100;
+                            }
+                        }
+                    }
+                }
+                else {
+                    error_code = 300;
+                }
+            }
+        }
+        var updateddata = JSON.stringify(user_data);
+        fs.writeFileSync(datapath, updateddata);
+        //update atm balance
+        var updateddata = JSON.stringify(atm_bal);
+        fs.writeFileSync(atm_info, updateddata);
+        if (flag === 1) {
+            res.send({
+                "status": "success",
+                "avl_bal": avl_bal,
+                "n2000": n2000,
+                "n500": n500,
+                "n100": n100
+
+            })
+        }
+
+        else {
+            res.send({ "status": "fail", "error_code": error_code })
+        }
     }
 })
 
